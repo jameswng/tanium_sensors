@@ -1,0 +1,57 @@
+<!-- Exported using version "7_0_314_6319" on Friday, May 05, 2017 11:30:01 AM -->
+<content>
+    <sensor>
+        <name>meminfo_withsh</name>
+        <what_hash>1645865392</what_hash>
+        <category>Miscellaneous</category>
+        <description>using &#x2F;bin&#x2F;sh to derive the percentage of real memory free and swap free. Only Linux (Tested on Centos 7)</description>
+        <result_type>1</result_type>
+        <qseconds>900</qseconds>
+        <ignore_case_flag>1</ignore_case_flag>
+        <exclude_from_parse>1</exclude_from_parse>
+        <delimiter>,</delimiter>
+        <hidden_flag>0</hidden_flag>
+        <queries>
+            <sensor_query>
+                <sensor_type>6</sensor_type>
+                <os>1</os>
+                <query>#!&#x2F;bin&#x2F;sh
+# ---
+# calculate the percentage of free memory and swap with shell commands only
+# ---
+PATH=&#x2F;bin:&#x2F;usr&#x2F;bin; export PATH
+cat &#x2F;proc&#x2F;meminfo | (
+	IFS=&quot;: &quot;
+	while read line; do
+		set $line
+		case &quot;$1&quot; in
+			MemTotal|MemFree|SwapTotal|SwapFree) eval &quot;$1=$2&quot;;;
+		esac
+	done
+	echo `expr &#x27;(&#x27; $MemFree &#x27;*&#x27; 100 &#x27;)&#x27; &#x2F; $MemTotal`&#x27;|&#x27;`expr &#x27;(&#x27; $SwapFree &#x27;*&#x27; 100 &#x27;)&#x27; &#x2F; $SwapTotal`
+)
+</query>
+                <signature></signature>
+            </sensor_query>
+        </queries>
+        <columns>
+            <column>
+                <column_index>0</column_index>
+                <name>Percent Of Real Memory Free</name>
+                <hidden_flag>0</hidden_flag>
+                <result_type>1</result_type>
+                <ignore_case_flag>1</ignore_case_flag>
+                <exclude_from_parse>0</exclude_from_parse>
+            </column>
+            <column>
+                <column_index>1</column_index>
+                <name>Percent of Swap  Free</name>
+                <hidden_flag>0</hidden_flag>
+                <result_type>1</result_type>
+                <ignore_case_flag>1</ignore_case_flag>
+                <exclude_from_parse>0</exclude_from_parse>
+            </column>
+        </columns>
+        <meta_data/>
+    </sensor>
+</content>

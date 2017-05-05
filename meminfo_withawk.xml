@@ -1,0 +1,55 @@
+<!-- Exported using version "7_0_314_6319" on Friday, May 05, 2017 11:29:54 AM -->
+<content>
+    <sensor>
+        <name>meminfo_withawk</name>
+        <what_hash>213502288</what_hash>
+        <category>Miscellaneous</category>
+        <description>using awk to derive the percentage of real memory free and swap free. Only Linux (Tested on Centos 7)</description>
+        <result_type>1</result_type>
+        <qseconds>900</qseconds>
+        <ignore_case_flag>1</ignore_case_flag>
+        <exclude_from_parse>1</exclude_from_parse>
+        <delimiter>|</delimiter>
+        <hidden_flag>0</hidden_flag>
+        <queries>
+            <sensor_query>
+                <sensor_type>6</sensor_type>
+                <os>1</os>
+                <query>#!&#x2F;bin&#x2F;sh
+# ---
+# calculate the percentage of free memory and swap with awk
+# ---
+PATH=&#x2F;bin:&#x2F;usr&#x2F;bin; export PATH
+cat &#x2F;proc&#x2F;meminfo | awk &#x27;
+	&#x2F;MemTotal:&#x2F;     { data[&quot;MemTotal&quot;]     = $2 }
+	&#x2F;MemFree:&#x2F;      { data[&quot;MemFree&quot;]      = $2 }
+	&#x2F;SwapTotal:&#x2F;    { data[&quot;SwapTotal&quot;]    = $2 }
+	&#x2F;SwapFree:&#x2F;     { data[&quot;SwapFree&quot;]     = $2 }
+	END {
+		printf(&quot;%d|%d\n&quot;, (data[&quot;MemFree&quot;] &#x2F; data[&quot;MemTotal&quot;]) * 100, (data[&quot;SwapFree&quot;] &#x2F; data[&quot;SwapTotal&quot;]) * 100)
+	}&#x27;
+</query>
+                <signature></signature>
+            </sensor_query>
+        </queries>
+        <columns>
+            <column>
+                <column_index>0</column_index>
+                <name>Percent Of Real Memory Free</name>
+                <hidden_flag>0</hidden_flag>
+                <result_type>3</result_type>
+                <ignore_case_flag>1</ignore_case_flag>
+                <exclude_from_parse>0</exclude_from_parse>
+            </column>
+            <column>
+                <column_index>1</column_index>
+                <name>Percent of Swap  Free</name>
+                <hidden_flag>0</hidden_flag>
+                <result_type>3</result_type>
+                <ignore_case_flag>1</ignore_case_flag>
+                <exclude_from_parse>0</exclude_from_parse>
+            </column>
+        </columns>
+        <meta_data/>
+    </sensor>
+</content>

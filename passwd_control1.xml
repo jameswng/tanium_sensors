@@ -1,0 +1,235 @@
+<!-- Exported using version "7_0_314_6319" on Friday, May 05, 2017 11:30:13 AM -->
+<content>
+    <sensor>
+        <name>passwd_control1</name>
+        <what_hash>1630595456</what_hash>
+        <category>Miscellaneous</category>
+        <description># passwd_control1
+# control1 checks for local &#x2F;etc&#x2F;passwd irregularities
+# 0. userids are not repeated
+# 1. uids are not repeated
+# 2. no passwd fields is empty
+# 3. all passwd fields are &quot;x&quot;
+# 4. shadow entries are not duplicated
+# 5. root password is in &#x2F;etc&#x2F;shadow
+# 6. list of userids in &#x2F;etc&#x2F;passwd exactly matches list of userids in &#x2F;etc&#x2F;shadow
+# 7. optionally all local users except root are locked in &#x2F;etc&#x2F;shadow
+# ---
+# this script returns two integers where the relevant bit is set if failed.
+# 0|0 return means all clear
+# a positive integer in the first field means a check failed.
+# a positive integer in the second field means a error running commands.
+# ---</description>
+        <result_type>1</result_type>
+        <qseconds>900</qseconds>
+        <ignore_case_flag>1</ignore_case_flag>
+        <exclude_from_parse>1</exclude_from_parse>
+        <delimiter>,</delimiter>
+        <hidden_flag>0</hidden_flag>
+        <queries>
+            <sensor_query>
+                <sensor_type>6</sensor_type>
+                <os>1</os>
+                <query>#! &#x2F;bin&#x2F;bash
+# ---
+# this script requires bash because it utilize the pipefail option to detect errors in the pipeline.
+set -o pipefail
+# as a benefit, it is also allowed to use bash functions and arithmetic expansion and other bash conventions
+# ---
+# passwd_control1
+# control1 checks for local &#x2F;etc&#x2F;passwd irregularities
+# 0. userids are not repeated
+# 1. uids are not repeated
+# 2. no passwd fields is empty
+# 3. all passwd fields are &quot;x&quot;
+# 4. shadow entries are not duplicated
+# 5. root password is in &#x2F;etc&#x2F;shadow
+# 6. list of userids in &#x2F;etc&#x2F;passwd exactly matches list of userids in &#x2F;etc&#x2F;shadow
+# 7. optionally all local users except root are locked in &#x2F;etc&#x2F;shadow
+# ---
+# this script returns two integers where the relevant bit is set if failed.
+# 0|0 return means all clear
+# a positive integer in the first field means a check failed.
+# a positive integer in the second field means a error running commands.
+# ---
+error=0
+test=0
+
+PATH=&#x2F;bin:&#x2F;usr&#x2F;bin; export PATH
+OFS=$IFS
+
+# redirect errors to &#x2F;dev&#x2F;null
+#exec 2&gt;&#x2F;dev&#x2F;null
+
+# given a variable with an integer value and a bit, set this bit in the variable
+function setbit() {
+        var=$1
+        bit=$2
+        cmd=&quot;echo \${${var}}&quot;
+        old=$(eval $cmd)
+        value=$(($old|2**$bit))
+        eval &quot;$var=$value&quot;
+}
+
+# given a bit and command, run the command and set the bit in the error and test variables if any failures.
+# not completely foolproof, but a decent try at error handling.
+function run() {
+        check=$1
+        cmd=$2
+        ret=$(eval $cmd)
+        rc=$?
+        if [[ $rc -ne 0 ]]; then
+                setbit error $check
+                setbit test $check
+                return 1
+        fi
+        return 0
+}
+
+# wrapping grep because it returns 2 for errors
+function wgrep() {
+        grep &quot;$@&quot;
+        if [[ $? -lt 2 ]]; then
+                return 0
+        else
+                return 1
+        fi
+}
+
+# wrapping cmp because it returns 2 for errors.
+function wcmp() {
+        cmp -s &quot;$@&quot;
+        case $? in
+        0)      echo match; return 0;;
+        1)      echo nomatch; return 0;;
+        *)      echo error; return 1;;
+        esac
+}
+
+# 0. userids are not repeated
+cmd=&#x27;cut -d&quot;:&quot; -f1 &#x2F;etc&#x2F;passwd | uniq -c | sort -nr | head -1&#x27;
+if run 0 &quot;$cmd&quot;; then
+        set $ret
+        if [[ &quot;$1&quot; -gt 1 ]]; then
+                setbit test 0
+        fi
+fi
+
+# 1. uids are not repeated
+cmd=&#x27;cut -d&quot;:&quot; -f3 &#x2F;etc&#x2F;passwd | uniq -c | sort -nr | head -1&#x27;
+if run 1 &quot;$cmd&quot;; then
+        set $ret
+        if [[ &quot;$1&quot; -gt 1 ]]; then
+                setbit test 1
+        fi
+fi
+
+# 2. no passwd fields is empty
+cmd=&#x27;cut -d&quot;:&quot; -f2 &#x2F;etc&#x2F;passwd | wgrep &quot;^$&quot; | wc -l&#x27;
+if run 2 &quot;$cmd&quot;; then
+        if [[ &quot;$ret&quot; -ne 0 ]]; then
+                setbit test 2
+        fi
+fi
+
+# 3. all passwd fields are &quot;x&quot;
+cmd=&#x27;cut -d&quot;:&quot; -f2 &#x2F;etc&#x2F;passwd | wgrep -v &quot;^x$&quot; | wc -l&#x27;
+if run 3 &quot;$cmd&quot;; then
+        if [[ &quot;$ret&quot; -ne 0 ]]; then
+                setbit test 3
+        fi
+fi
+
+
+# 4. shadow entries are not duplicated
+cmd=&#x27;cut -d&quot;:&quot; -f1 &#x2F;etc&#x2F;shadow | uniq -c | sort -nr | head -1&#x27;
+if run 4 &quot;$cmd&quot;; then
+        set $ret
+        if [[ &quot;$1&quot; -gt 1 ]]; then
+                setbit test 4
+        fi
+fi
+
+# 5. one and only root password is in &#x2F;etc&#x2F;passwd, &#x2F;etc&#x2F;shadow
+cmd=&#x27;wgrep &quot;^root:x:&quot; &#x2F;etc&#x2F;passwd | wc -l&#x27;
+# first check there is a root in &#x2F;etc&#x2F;passwd and its passing the password entry to &#x2F;etc&#x2F;shadow
+if run 5 &quot;$cmd&quot;; then
+        if [[ &quot;$ret&quot; -ne 1 ]]; then
+                setbit test 5
+        fi
+fi
+# second check there is a root in &#x2F;etc&#x2F;shadow and its more than 10 chars in len
+cmd=&#x27;wgrep &quot;^root:&quot; &#x2F;etc&#x2F;shadow | cut -d&quot;:&quot; -f2 | wc -L&#x27;
+if run 5 &quot;$cmd&quot;; then
+        if [[ &quot;$ret&quot; -le 10 ]]; then
+                setbit test 5
+        fi
+fi
+
+# 6. list of userids in &#x2F;etc&#x2F;passwd exactly matches list of userids in &#x2F;etc&#x2F;shadow
+temp=$$
+umask 077
+cmd1=&#x27;cut -d&quot;:&quot; -f1 &#x2F;etc&#x2F;passwd | sort &gt; &#x2F;tmp&#x2F;$$.p&#x27;
+cmd2=&#x27;cut -d&quot;:&quot; -f1 &#x2F;etc&#x2F;shadow | sort &gt; &#x2F;tmp&#x2F;$$.s&#x27;
+cmd3=&#x27;wcmp &#x2F;tmp&#x2F;$$.p &#x2F;tmp&#x2F;$$.s&#x27;
+cmd4=&#x27;rm -f &#x2F;tmp&#x2F;$$.p &#x2F;tmp&#x2F;$$.s&#x27;
+if run 6 &quot;$cmd1&quot;; then
+        if run 6 &quot;$cmd2&quot;; then
+                if run 6 &quot;$cmd3&quot;; then
+                        if [[ $ret = &quot;nomatch&quot; ]]; then
+                                setbit test 6
+                        fi
+                        run 6 &quot;$cmd4&quot;
+                fi
+        fi
+fi
+
+# 7. optionally all local users except root are locked in &#x2F;etc&#x2F;shadow
+
+OFS=$IFS
+IFS=&quot;:&quot;
+set -o noglob on
+while read line; do
+        set $line
+        if [[ &quot;$1&quot; = &quot;root&quot; ]]; then
+                continue
+        fi
+        case &quot;$2&quot; in
+        NP|*NP*|NOPASSWD|*NOPASSWD*) :;;
+        !!|&#x27;*&#x27;) :;;
+        *) setbit test 7; break;;
+        esac
+done &lt; &#x2F;etc&#x2F;shadow
+if [[ $? -ne 0 ]]; then
+        setbit error 7
+fi
+IFS=$OFS
+set -o noglob off
+
+# ---
+echo &quot;$test|$error&quot;
+</query>
+                <signature></signature>
+            </sensor_query>
+        </queries>
+        <columns>
+            <column>
+                <column_index>0</column_index>
+                <name>control1_tests</name>
+                <hidden_flag>0</hidden_flag>
+                <result_type>9</result_type>
+                <ignore_case_flag>1</ignore_case_flag>
+                <exclude_from_parse>0</exclude_from_parse>
+            </column>
+            <column>
+                <column_index>1</column_index>
+                <name>control1_errors</name>
+                <hidden_flag>0</hidden_flag>
+                <result_type>9</result_type>
+                <ignore_case_flag>1</ignore_case_flag>
+                <exclude_from_parse>0</exclude_from_parse>
+            </column>
+        </columns>
+        <meta_data/>
+    </sensor>
+</content>
