@@ -1,4 +1,4 @@
-<!-- Exported using version "7_0_314_6319" on Friday, May 05, 2017 11:30:13 AM -->
+<!-- Exported using version "7_0_314_6319" on Friday, May 05, 2017 12:52:54 PM -->
 <content>
     <sensor>
         <name>passwd_control1</name>
@@ -24,7 +24,7 @@
         <qseconds>900</qseconds>
         <ignore_case_flag>1</ignore_case_flag>
         <exclude_from_parse>1</exclude_from_parse>
-        <delimiter>,</delimiter>
+        <delimiter>|</delimiter>
         <hidden_flag>0</hidden_flag>
         <queries>
             <sensor_query>

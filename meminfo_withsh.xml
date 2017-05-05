@@ -1,4 +1,4 @@
-<!-- Exported using version "7_0_314_6319" on Friday, May 05, 2017 11:30:01 AM -->
+<!-- Exported using version "7_0_314_6319" on Friday, May 05, 2017 12:52:46 PM -->
 <content>
     <sensor>
         <name>meminfo_withsh</name>
@@ -9,7 +9,7 @@
         <qseconds>900</qseconds>
         <ignore_case_flag>1</ignore_case_flag>
         <exclude_from_parse>1</exclude_from_parse>
-        <delimiter>,</delimiter>
+        <delimiter>|</delimiter>
         <hidden_flag>0</hidden_flag>
         <queries>
             <sensor_query>
@@ -39,7 +39,7 @@ cat &#x2F;proc&#x2F;meminfo | (
                 <column_index>0</column_index>
                 <name>Percent Of Real Memory Free</name>
                 <hidden_flag>0</hidden_flag>
-                <result_type>1</result_type>
+                <result_type>9</result_type>
                 <ignore_case_flag>1</ignore_case_flag>
                 <exclude_from_parse>0</exclude_from_parse>
             </column>
@@ -47,7 +47,7 @@ cat &#x2F;proc&#x2F;meminfo | (
                 <column_index>1</column_index>
                 <name>Percent of Swap  Free</name>
                 <hidden_flag>0</hidden_flag>
-                <result_type>1</result_type>
+                <result_type>9</result_type>
                 <ignore_case_flag>1</ignore_case_flag>
                 <exclude_from_parse>0</exclude_from_parse>
             </column>
